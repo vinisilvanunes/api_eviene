@@ -99,4 +99,20 @@ router.delete('/:username', checkToken, async (req, res) => {
   }
 });
 
+router.get('/:username', checkToken, async (req, res)=>{
+  const username = req.params.username;
+
+  try{
+    const user = await User.find({username: username}, {username: 1, profilePicture: 1});
+    if(user.length == 0){
+      res.status(500).json({message: 'Usuário não encontrado'});
+    }else{
+      res.status(200).json(user);
+    }
+  }catch(error){
+    console.error(error);
+    res.status(500).json({message: 'Erro na consulta'});
+  }
+})
+
 module.exports = router;
