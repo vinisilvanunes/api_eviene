@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const {checkToken} = require('../middlewares/auth');
 const User = require('../models/User');
 
 const router = express.Router();
@@ -73,6 +74,28 @@ router.post('/login', async (req, res)=>{
     return res.status(200).json({message: "Login realizado com sucesso", token, id: user.id});
   }catch(error){
     return res.status(500).json({message: "Erro ao logar o usuário, tente novamente mais tarde!"});
+  }
+});
+
+router.delete('/:username', checkToken, async (req, res) => {
+  const username = req.params.username;
+  const authenticatedID = req.user.id;
+
+  const user = await User.findOne({ username });
+  if (!user) {
+    return res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+
+  if(authenticatedID !== user.id){
+    return res.status(404).json({ message: 'Acesso negado' });
+  }
+
+  try {
+    user.active = false;
+    await user.save();
+    res.status(200).json({ message: 'Usuário desativado com sucesso' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao desativar usuário' });
   }
 });
 
