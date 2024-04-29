@@ -99,6 +99,49 @@ router.delete('/:username', checkToken, async (req, res) => {
   }
 });
 
+router.put('/follow/:username', checkToken, async (req, res) => {
+  const username = req.params.username;
+  const authenticatedID = req.user.id;
+
+  try {
+    const userFollowed = await User.findOne({ username: username });
+    const userFollowing = await User.findById(authenticatedID);
+
+    if (!userFollowed || !userFollowing) {
+      return res.status(500).json({ message: 'Usuário não existe' });
+    }
+
+    if (userFollowed.id === userFollowing.id) {
+      return res.status(400).json({ message: 'Você não pode seguir você mesmo' });
+    }
+
+    const isFollower = userFollowing.following.includes(userFollowed.id);
+    if (isFollower) {
+      const followedIndex = userFollowing.following.indexOf(userFollowed.id);
+      const followingIndex = userFollowed.followers.indexOf(userFollowing.id);
+
+      userFollowing.following.splice(followedIndex, 1);
+      userFollowed.followers.splice(followingIndex, 1);
+
+      await userFollowing.save();
+      await userFollowed.save();
+
+      return res.status(200).json({ message: 'Deixando de seguir com sucesso' });
+    } else {
+      userFollowed.followers.push(userFollowing.id);
+      userFollowing.following.push(userFollowed.id);
+
+      await userFollowing.save();
+      await userFollowed.save();
+
+      return res.status(200).json({ message: 'Seguindo com sucesso' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erro na consulta' });
+  }
+});
+
 router.get('/:username', checkToken, async (req, res)=>{
   const username = req.params.username;
 
@@ -113,6 +156,6 @@ router.get('/:username', checkToken, async (req, res)=>{
     console.error(error);
     res.status(500).json({message: 'Erro na consulta'});
   }
-})
+});
 
 module.exports = router;
