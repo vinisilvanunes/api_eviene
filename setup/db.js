@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 async function startDatabaseConnection(){
   try{
-    await mongoose.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_HOST}/${process.env.DB_NAME}?authSource=admin`);
+    await mongoose.connect(`mongodb+srv://eviene_adm:${process.env.DB_PASS}@eviene.izgvr0p.mongodb.net/?retryWrites=true&w=majority&appName=eviene`);
     console.log('Conexão com o banco de dados bem sucedida')
   }catch(error){
     console.error('Falha ao conectar com o banco de dados: ', error)
