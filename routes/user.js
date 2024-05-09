@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const {checkToken} = require('../middlewares/auth');
 const User = require('../models/User');
+const upload = require('../middlewares/upload');
 
 const router = express.Router();
 
@@ -157,5 +158,93 @@ router.get('/:username', checkToken, async (req, res)=>{
     res.status(500).json({message: 'Erro na consulta'});
   }
 });
+
+router.get('/followers/:username', checkToken, async (req, res)=>{
+  const username = req.params.username;
+  try{
+    const user = await User.findOne({username}, {username: 1, profilePicture: 1});
+    if(user.length == 0){
+      res.status(500).json({message: 'Você não tem seguidores'});
+    }else{
+      res.status(200).json(user.followers);
+    }
+  }catch(error){
+    console.error(error);
+    res.status(500).json({message: 'Erro na consulta'});
+  }
+});
+
+router.get('/following/:username', checkToken, async (req, res)=>{
+  const username = req.params.username;
+  try{
+    const user = await User.findOne({username}, {username: 1, profilePicture: 1});
+    if(user.length == 0){
+      res.status(500).json({message: 'Você não está seguindo ninguém'});
+    }else{
+      res.status(200).json(user.following);
+    }
+  }catch(error){
+    console.error(error);
+    res.status(500).json({message: 'Erro na consulta'});
+  }
+});
+
+router.get('/profile/:username', checkToken, async(req, res)=>{
+  const username = req.params.username
+  try{
+    const user = await User.aggregate([
+      {
+        $match: {
+          username: username
+        }
+      }, 
+      {
+        $project: {
+          _id: 0,
+          username: 1, 
+          profilePicture: 1, 
+          followers: {
+            $size: followers
+          }, 
+          following: {
+            $size: following
+          }}
+      }
+    ]).exec()
+    res.status(200).json(user)
+  }catch(error){
+    res.status(500).json({message: 'Erro ao consultar dados do usuário'})
+  }
+});
+
+router.put('/', checkToken, upload, async(req, res)=>{
+  const userID = req.user.id;
+  const profilePic = req.files;
+  const {username, name, bio, birthDate} = req.body; 
+
+  if(!username){
+    res.status(400).json({message: "Preencha o campo nome de usuário"})
+  }
+
+  if(!name){
+    res.status(400).json({message: "Preencha o campo nome"})
+  }
+
+  const userInfo = {
+    profilePicture: profilePic,
+    username: username,
+    name: name,
+    bio: bio,
+    birthDate: birthDate
+  }
+
+  try{
+    await User.findByIdAndUpdate(userID, userInfo);
+    res.status(200).json({message: "Dados atualizados com sucesso"});
+  }catch(error){
+    res.status(500).json({message: "Erro ao atualizar informações do usuário"})
+  }
+})
+
 
 module.exports = router;
