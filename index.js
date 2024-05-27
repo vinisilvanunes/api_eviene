@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const {startDatabaseConnection} = require('./setup/db');
 const userRoutes = require('./routes/user');
 const postRoutes = require('./routes/post');
@@ -9,6 +10,7 @@ const port = process.env.SERVER_PORT || 3000;
 const app = express();
 
 app.use(express.json());
+app.use(cors())
 
 startDatabaseConnection();
 
