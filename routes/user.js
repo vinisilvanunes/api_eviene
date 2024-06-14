@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const {checkToken} = require('../middlewares/auth');
 const User = require('../models/User');
+const Post = require('../models/Post');
 const upload = require('../middlewares/upload');
 
 const router = express.Router();
@@ -143,21 +144,81 @@ router.put('/follow/:username', checkToken, async (req, res) => {
   }
 });
 
-router.get('/:username', checkToken, async (req, res)=>{
+router.get('/info/:username', checkToken, async (req, res)=>{
   const username = req.params.username;
 
   try{
-    const user = await User.find({username: username}, {username: 1, profilePicture: 1});
+    const user = await User.findOne({username: username}, {});
+
     if(user.length == 0){
       res.status(500).json({message: 'Usuário não encontrado'});
     }else{
-      res.status(200).json(user);
+      const posts = await Post.find({author: user._id})
+
+      const infos = {
+        profilePic: user.profilePicture,
+        name : user.name,
+        username: user.username,
+        followers: user.followers.length,
+        following: user.following.length,
+        posts: posts.length
+      }
+      res.status(200).json(infos);
     }
   }catch(error){
     console.error(error);
     res.status(500).json({message: 'Erro na consulta'});
   }
 });
+
+router.get('/info', checkToken, async (req, res)=>{
+  const userId = req.user.id;
+
+  try{
+    const user = await User.findById(userId, {});
+
+    const posts = await Post.find({author: userId})
+
+    const infos = {
+      profilePic: user.profilePicture,
+      name : user.name,
+      username: user.username,
+      followers: user.followers.length,
+      following: user.following.length,
+      posts: posts.length
+    }
+    
+    if(!user){
+      res.status(400).json({message: 'Usuário não encontrado'});
+    }else{
+      res.status(200).json(infos);
+    }
+  }catch(error){
+    console.error(error);
+    res.status(500).json({message: 'Erro na consulta'});
+  }
+});
+
+router.get('/search', checkToken, async (req, res) =>{
+  const query = req.query.q;
+  if (!query) {
+    return res.status(400).json({ message: 'Search query is required' });
+  }
+
+  try {
+    const users = await User.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { username: { $regex: query, $options: 'i' } }
+      ]
+    }, { name: 1, username: 1, profilePicture: 1 });
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+})
 
 router.get('/followers/:username', checkToken, async (req, res)=>{
   const username = req.params.username;
