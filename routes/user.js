@@ -29,9 +29,9 @@ router.post('/register', async (req,res)=>{
   if(checkEmail){
     return res.status(400).json({message: "E-mail já cadastrado"});
   }
-  if(password !== confirmPassword){
-    return res.status(400).json({message: "Senhas não conferem"});
-  }
+//   if(password !== confirmPassword){
+//     return res.status(400).json({message: "Senhas não conferem"});
+//   }
 
   const salt = await bcrypt.genSalt(12)
   const hashedPassword = await bcrypt.hash(password, salt);

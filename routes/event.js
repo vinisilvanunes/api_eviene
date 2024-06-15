@@ -86,7 +86,11 @@ router.get('/search', checkToken, async (req, res) =>{
 router.get("/", async(req, res)=>{
     try{
         const event = await Event.find({}).sort({createdAt: -1}).exec()
-        res.status(200).json(event)
+        if(event.length == 0){
+            return  res.status(400).json(message: "Não há eventos disponiveis")
+        }else{
+         res.status(200).json(event)
+        }
     }catch(error){
         res.status(500).json()
     }
