@@ -12,8 +12,8 @@ router.post('/', checkToken, upload, async (req, res)=>{
     const content = req.body.content || null;
     const images = req.files.map(file => file.path);
 
-    if(images.length == 0){
-        return res.status(400).json({message: "A imagem é obrigatória"})
+    if(!content){
+        return res.status(400).json({message: "O conteúdo é obrigatório"})
     }
     const newPost = new Post({
         author: author,
@@ -94,7 +94,7 @@ router.get('/feed', checkToken, async(req,res)=>{
     try{
         const posts = await Post.find({author: {$in: usersFollowed}}).sort({createdAt: -1}).exec();
         if(posts.length == 0){
-            res.status(200).json({message: "Não há posts disponíveis"});
+            res.status(400).json({message: "Não há posts disponíveis"});
         }else{
             res.status(200).json(posts);
         }
