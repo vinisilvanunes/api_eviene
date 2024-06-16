@@ -92,7 +92,7 @@ router.get("/", async(req, res)=>{
          res.status(200).json(event)
         }
     }catch(error){
-        res.status(500).json()
+        res.status(500).json({message: "Erro no servidor tente novamente mais tarde!"})
     }
 })
 
