@@ -87,7 +87,7 @@ router.get("/", async(req, res)=>{
     try{
         const event = await Event.find({}).sort({createdAt: -1}).exec()
         if(event.length == 0){
-            return  res.status(400).json(message: "Não há eventos disponiveis")
+            return  res.status(400).json({message: "Não há eventos disponiveis"})
         }else{
          res.status(200).json(event)
         }
