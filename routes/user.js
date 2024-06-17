@@ -150,7 +150,7 @@ router.get('/info/:username', checkToken, async (req, res)=>{
   try{
     const user = await User.findOne({username: username}, {});
 
-    if(user.length == 0){
+    if(!user){
       res.status(500).json({message: 'Usuário não encontrado'});
     }else{
       const posts = await Post.find({author: user._id})
@@ -161,7 +161,7 @@ router.get('/info/:username', checkToken, async (req, res)=>{
         username: user.username,
         followers: user.followers.length,
         following: user.following.length,
-        posts: posts.length
+        posts: posts
       }
       res.status(200).json(infos);
     }
@@ -185,7 +185,7 @@ router.get('/info', checkToken, async (req, res)=>{
       username: user.username,
       followers: user.followers.length,
       following: user.following.length,
-      posts: posts.length
+      posts: posts
     }
     
     if(!user){

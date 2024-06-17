@@ -87,12 +87,39 @@ router.put('/comment/:idPost', checkToken, async(req, res)=>{
     }
 });
 
+router.get('/', checkToken, async (req, res) => {
+  const userID = req.user.id;
+
+  try {
+    const posts = await Post.find({
+      $and: [
+        { author: { $ne: userID } },
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .populate('author', 'username profilePicture')
+      .exec();
+
+    if (!posts.length) {
+      res.status(404).json({ message: "There are no posts to display." });
+    } else {
+      res.status(200).json(posts);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred while fetching posts." });
+  }
+});
+
 router.get('/feed', checkToken, async(req,res)=>{
     const userID = req.user.id;
     const user = await User.findById(userID);
     const usersFollowed = user.following;
     try{
-        const posts = await Post.find({author: {$in: usersFollowed}}).sort({createdAt: -1}).exec();
+        const posts = await Post.find({ author: { $in: usersFollowed } })
+            .sort({ createdAt: -1 })
+            .populate('author', 'username profilePicture')
+            .exec();
         if(posts.length == 0){
             res.status(400).json({message: "Não há posts disponíveis"});
         }else{
