@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require("dotenv").config()
 
 const Schema = mongoose.Schema;
 
@@ -27,7 +28,7 @@ const userSchema = new Schema({
   },
   profilePicture: {
     type: String,
-    default: ""
+    default: `${process.env.S3_URL}default.png`
   },
   bio: {
     type: String,
