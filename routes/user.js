@@ -5,6 +5,7 @@ const {checkToken} = require('../middlewares/auth');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const upload = require('../middlewares/upload');
+require('dotenv').config()
 
 const router = express.Router();
 
@@ -185,6 +186,7 @@ router.get('/info', checkToken, async (req, res)=>{
       username: user.username,
       followers: user.followers.length,
       following: user.following.length,
+      bio: user.bio,
       posts: posts
     }
     
@@ -280,8 +282,8 @@ router.get('/profile/:username', checkToken, async(req, res)=>{
 
 router.put('/', checkToken, upload, async(req, res)=>{
   const userID = req.user.id;
-  const profilePic = req.files;
-  const {username, name, bio, birthDate} = req.body; 
+  //const profilePic = req.files.map(file => `${process.env.S3_URL}${file.path}`);
+  const {username, name, bio} = req.body; 
 
   if(!username){
     res.status(400).json({message: "Preencha o campo nome de usuário"})
@@ -291,13 +293,21 @@ router.put('/', checkToken, upload, async(req, res)=>{
     res.status(400).json({message: "Preencha o campo nome"})
   }
 
+  const checkUsername = await User.findOne({username: username});
+  if(checkUsername){
+    return res.status(400).json({message: "Nome de usuário já cadastrado"});
+  }
+
   const userInfo = {
-    profilePicture: profilePic,
     username: username,
     name: name,
     bio: bio,
-    birthDate: birthDate
-  }
+};
+
+if (req.files && req.files.length > 0) {
+    const profilePic = `${req.files[0].location}`;
+    userInfo.profilePicture = profilePic;
+}
 
   try{
     await User.findByIdAndUpdate(userID, userInfo);

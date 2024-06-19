@@ -2,45 +2,40 @@ const express = require('express');
 const Event = require('../models/Event'); 
 const { checkToken } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
-const multer = require('multer');
+require("dotenv").config()
 
 const router = express.Router();
 
-router.post("/", checkToken, (req, res, next) => {    
-    upload(req, res, async (err) => {
-        if (err instanceof multer.MulterError) {
-            return res.status(400).json({ message: err.message });
-        } else if (err) {
-            return res.status(500).json({ message: "Erro no servidor ao processar o upload." });
-        }
+router.post("/", checkToken, upload, async (req, res, next) => {    
+    const author = req.user.id;
+    const { description, location, attractions, date } = req.body;
 
-        const author = req.user.id;
-        const banner = req.files;
-        const { bannerName, description, location, attractions, date } = req.body;
+    if (!description || !location || !date) {
+        return res.status(400).json({ message: "Por favor, preencha todos os campos obrigatórios." });
+    }
 
-        if (!banner || !description || !location || !date) {
-            return res.status(400).json({ message: "Por favor, preencha todos os campos obrigatórios." });
-        }
-        const bannerPath = `${Date.now()}-${bannerName}`;
-
-        const newEvent = new Event({
-            author: author,
-            banner: bannerPath,
-            description: description,
-            location: location,
-            attractions: attractions,
-            date: date
-        });
-
-        try {
-            await newEvent.save();
-            return res.status(201).json({ message: "Evento criado com sucesso!" });
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: "Erro ao criar o evento. Tente novamente mais tarde." });
-        }
+    const newEvent = new Event({
+        author: author,
+        description: description,
+        location: location,
+        attractions: attractions,
+        date: date
     });
+
+    if (req.files && req.files.length > 0) {
+        const banner = `${req.files[0].location}`;
+        newEvent.banner = banner;
+    }
+
+    try {
+        await newEvent.save();
+        return res.status(201).json({ message: "Evento criado com sucesso!" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Erro ao criar o evento. Tente novamente mais tarde." });
+    }
 });
+
 
 
 router.delete("/:id", async(req, res)=>{
