@@ -59,7 +59,7 @@ router.post('/login', async (req, res)=>{
     return res.status(400).json({message: "Preencha todos os campos"});
   }
 
-  const user = await User.findOne({email: email});
+  const user = await User.findOne({email: email, active: true});
   if(!user){
     return res.status(400).json({message: "Usuário não encontrado"});
   }
@@ -80,17 +80,12 @@ router.post('/login', async (req, res)=>{
   }
 });
 
-router.delete('/:username', checkToken, async (req, res) => {
-  const username = req.params.username;
+router.delete('/', checkToken, async (req, res) => {
   const authenticatedID = req.user.id;
 
-  const user = await User.findOne({ username });
+  const user = await User.findById(authenticatedID);
   if (!user) {
     return res.status(404).json({ message: 'Usuário não encontrado' });
-  }
-
-  if(authenticatedID !== user.id){
-    return res.status(404).json({ message: 'Acesso negado' });
   }
 
   try {
@@ -291,10 +286,10 @@ router.put('/', checkToken, upload, async(req, res)=>{
 
   if(!name){
     res.status(400).json({message: "Preencha o campo nome"})
-  }
+  } 
 
   const checkUsername = await User.findOne({username: username});
-  if(checkUsername){
+  if(checkUsername && checkUsername._id.toString() !== userID){
     return res.status(400).json({message: "Nome de usuário já cadastrado"});
   }
 

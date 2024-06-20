@@ -116,6 +116,8 @@ router.get('/', checkToken, async (req, res) => {
             images: 1,
             description: 1,
             createdAt: 1,
+            likes: 1,
+            comments: 1,
             'author._id': 1,
             'author.username': 1,
             'author.profilePicture': 1
